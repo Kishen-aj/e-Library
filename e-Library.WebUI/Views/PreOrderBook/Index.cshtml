@@ -38,8 +38,8 @@
         @if (item.Stock == 0)
         {
 <a href="#" class="btn btn-danger disabled" style="padding:8px; ">No Stock</a> }
-else if (item.Stock > 0)
-{
+                else if (item.Stock > 0)
+                {
 <a href="@Url.Action("AddPreOrderToBasket", "Basket", new { Id=item.Id, Price=item.Price })" class="btn btn-default" style="padding:8px;">Add to Basket</a>}
     </div>
 </div>}

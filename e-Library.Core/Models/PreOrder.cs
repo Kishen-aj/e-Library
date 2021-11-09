@@ -12,7 +12,6 @@ namespace e_Library.Core.Models
     {
         public PreOrder()
         {
-            this.PreOrderItems = new List<PreOrderItem>();
         }
 
         [DisplayName("First Name")]
@@ -42,7 +41,6 @@ namespace e_Library.Core.Models
         public decimal FinalTotal { get; set; }
         public string Driver { get; set; }
         public IEnumerable<Driver> Drivers { get; set; }
-        public virtual ICollection<PreOrderItem> PreOrderItems { get; set; }
         [DisplayName("Suburb")]
         public string Suburb { get; set; }
         public areaList Area { get; set; }

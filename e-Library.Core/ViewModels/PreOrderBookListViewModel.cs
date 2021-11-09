@@ -11,6 +11,5 @@ namespace e_Library.Core.ViewModels
     {
         public IEnumerable<PreOrderBook> Books { get; set; }
         public IEnumerable<BookGenre> BookGenres { get; set; }
-        //public IEnumerable<BookAuthor> BookAuthors { get; set; }
     }
 }

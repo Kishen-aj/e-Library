@@ -27,12 +27,13 @@ namespace e_Library.WebUI.Controllers
             this.customers = customers;
         }
         // GET: Basket2
+        [Authorize]
         public ActionResult Index()
         {
             var model = basketService.GetBasketItems(this.HttpContext);
             return View(model);
         }
-        
+
         public ActionResult AddToBasket(string Id)
         {
             basketService.AddToBasket(this.HttpContext, Id);
@@ -77,6 +78,22 @@ namespace e_Library.WebUI.Controllers
                 return View(order);
             }
             else
+            if (customer != null)
+            {
+                PreOrder order = new PreOrder()
+                {
+                    Email = customer.Email,
+                    City = customer.City,
+                    Street = customer.Street,
+                    FirstName = customer.FirstName,
+                    LastName = customer.LastName,
+                    ZipCode = customer.ZipCode,
+                    BasketTotal = basketTotal
+                };
+                order.BasketTotal = basketTotal;
+                return View(order);
+            }
+            else
             {
                 return RedirectToAction("Error");
             }
@@ -88,8 +105,10 @@ namespace e_Library.WebUI.Controllers
         {
             //order.Area = order.Area;
             order.OrderStatus = "Order Created";
+            preorder.OrderStatus = "Pre-Ordered";
             order.Email = User.Identity.Name;
-
+            preorder.Email = User.Identity.Name;
+            
 
             //delivery
             if (order.Delivery.ToString() == "Courier")
@@ -100,6 +119,16 @@ namespace e_Library.WebUI.Controllers
             if (order.Delivery.ToString() == "Collect")
             {
                 return RedirectToAction("Collect", order);
+            }
+            else
+            if (preorder.Delivery.ToString() == "Courier")
+            {
+                return RedirectToAction("Courier", preorder);
+            }
+            else
+            if (preorder.Delivery.ToString() == "Collect")
+            {
+                return RedirectToAction("Collect", preorder);
             }
 
             //process payment
@@ -148,10 +177,53 @@ namespace e_Library.WebUI.Controllers
             orderService.CreateOrder(objOrder, basketItems);
             //Clear Basket
             basketService.ClearBasket(this.HttpContext);
+            //Sending Order Info to OrderSummary Page
+            return RedirectToAction("OrderSummary", new { Id = objOrder.Id });
 
             //Sending Final Total to Payment Page
             //  return RedirectToAction("Payment", new { FinalTotal = objOrder.FinalTotal });
+        
+        public ActionResult PreCourier()
+        {
+            return View();
+        }
+        [HttpPost]
+        public ActionResult PreCourier(PreOrder objOrder)
+        {
+            Customer customer = customers.Collection().FirstOrDefault(c => c.Email == User.Identity.Name);
+            var basketItems = basketService.GetBasketItems(this.HttpContext);
 
+            //Populate Order with Customer Details
+            objOrder.Email = customer.Email;
+            objOrder.City = customer.City;
+            objOrder.Street = customer.Street;
+            objOrder.FirstName = customer.FirstName;
+            objOrder.LastName = customer.LastName;
+            objOrder.ZipCode = customer.ZipCode;
+            objOrder.OrderStatus = "Pre-Ordered";
+
+
+
+            objOrder.Driver = "";
+
+            //Populate Delivery Method from Form
+            objOrder.Delivery = PreOrder.deliveryType.Courier;
+            objOrder.DeliveryMethod = objOrder.DeliveryMethod;
+            objOrder.DeliveryDate = objOrder.CalcDeliveryDate();
+
+            //Determine Suburb
+            objOrder.Area = objOrder.Area;
+            objOrder.Suburb = objOrder.DetermineSuburb();
+
+
+            //Get Basket Total from Method in Basket Service
+            objOrder.BasketTotal = basketService.BasketTotal(this.HttpContext);
+            //Calculate Final Total from Method in Model
+            objOrder.FinalTotal = objOrder.CalcOrderFinalTotal();
+            //Create Order
+            preorderService.CreateOrder(objOrder, basketItems);
+            //Clear Basket
+            basketService.ClearBasket(this.HttpContext);
             //Sending Order Info to OrderSummary Page
             return RedirectToAction("OrderSummary", new { Id = objOrder.Id });
 
@@ -160,6 +232,7 @@ namespace e_Library.WebUI.Controllers
         {
             return View();
         }
+
         [HttpPost]
         public ActionResult Collect(Order objOrder)
         {
@@ -193,10 +266,42 @@ namespace e_Library.WebUI.Controllers
             orderService.CreateOrder(objOrder, basketItems);
             //Clear Basket
             basketService.ClearBasket(this.HttpContext);
+            //Sending Order Info to OrderSummary Page
+            return RedirectToAction("OrderSummary", new { Id = objOrder.Id });
+        }
+
+        public ActionResult PreCollect()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult PreCollect(PreOrder objOrder)
+        {
+            Customer customer = customers.Collection().FirstOrDefault(c => c.Email == User.Identity.Name);
+            var basketItems = basketService.GetBasketItems(this.HttpContext);
+
+            //Populate Order with Customer Details
+            objOrder.Email = customer.Email;
+            objOrder.City = customer.City;
+            objOrder.Street = customer.Street;
+            objOrder.FirstName = customer.FirstName;
+            objOrder.LastName = customer.LastName;
+            objOrder.ZipCode = customer.ZipCode;
+            objOrder.OrderStatus = "Pending Collection";
+            objOrder.Driver = "No Driver Required";
 
             //Sending Final Total to Payment Page
             //  return RedirectToAction("Payment", new { FinalTotal = objOrder.FinalTotal });
 
+            //Get Basket Total from Method in Basket Service
+            objOrder.BasketTotal = basketService.BasketTotal(this.HttpContext);
+            //Calculate Final Total from Method in Model
+            objOrder.FinalTotal = objOrder.CalcOrderFinalTotal();
+            //Create Order
+            preorderService.CreateOrder(objOrder, basketItems);
+            //Clear Basket
+            basketService.ClearBasket(this.HttpContext);
 
             //Sending Order Info to OrderSummary Page
             return RedirectToAction("OrderSummary", new { Id = objOrder.Id });
@@ -213,6 +318,18 @@ namespace e_Library.WebUI.Controllers
         [HttpPost]
         public ActionResult OrderSummary(Order objOrder)
         {
+            return RedirectToAction("Payment", new { FinalTotal = objOrder.FinalTotal});
+        }
+
+        public ActionResult PreOrderSummary(string Id)
+        {
+            Order order = orderService.GetOrder(Id);
+            Session["OrderID"] = Id;
+            return View(order);
+        }
+        [HttpPost]
+        public ActionResult PreOrderSummary(PreOrder objOrder)
+        {
             return RedirectToAction("Payment", new { FinalTotal = objOrder.FinalTotal });
         }
 
@@ -222,7 +339,7 @@ namespace e_Library.WebUI.Controllers
         {
             string url = "";
             decimal fTotal = FinalTotal;
-
+            
             fTotal = Decimal.Ceiling(fTotal);
             url = "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_xclick&amount=" + (fTotal) + "&business=peakylibrary@outlook.com&item_name=Books&return=https://localhost:44349/Basket/ThankYou/"; //localhost
                                                                                                                                                                                                          // url = "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_xclick&amount=" + (fTotal) + "&business=JanjuaTailors@Shop.com&item_name=Books&return=https://2021grp09.azurewebsites.net/Basket/ThankYou"; //deploy
@@ -232,14 +349,14 @@ namespace e_Library.WebUI.Controllers
 
 
 
-        public ActionResult ThankYou()
+        public ActionResult ThankYou() 
         {
             //Get Customer Details
             Customer customer = customers.Collection().FirstOrDefault(c => c.Email == User.Identity.Name); //Returns the user
             string fname = customer.FirstName; //name
 
             //Get Order Details
-
+            
 
             string receiver = customer.Email;
             string subject = "E-Library Order Confirmation  ";

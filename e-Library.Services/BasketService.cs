@@ -111,9 +111,13 @@ namespace e_Library.Services
             bookToEdit.TotalSales += bookPrice;
 
             //Decrease Stock
+
             bookToEdit.Stock -= 1;
 
             //Add to Number of Orders
+
+
+
             if (bookQuantity < 2)
             {
                 bookToEdit.NumOrders += 1;
@@ -136,6 +140,7 @@ namespace e_Library.Services
 
             string bookId = item.BookId;
             Book bookToEdit = bookContext.Find(bookId);
+
             int bookQuantity = item.Quantity;
 
             decimal bookPrice = bookToEdit.Price;

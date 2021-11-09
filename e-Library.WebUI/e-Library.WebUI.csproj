@@ -467,6 +467,7 @@
     <Content Include="Views\PreOrderBookManager\Create.cshtml" />
     <Content Include="Views\PreOrderBookManager\Edit.cshtml" />
     <Content Include="Views\PreOrderBookManager\Delete.cshtml" />
+    <Content Include="Views\PreOrderBookManager\Dashboard.cshtml" />
     <Content Include="Views\Basket\PreCourier.cshtml" />
     <Content Include="Views\Basket\PreCollect.cshtml" />
     <Content Include="Views\Basket\PreOrderSummary.cshtml" />

@@ -10,9 +10,5 @@ namespace e_Library.Core.Contracts
 {
     public interface IPreOrderService
     {
-        void CreatePreOrder(PreOrder baseOrder, List<BasketItemViewModel> basketItems);
-        List<PreOrder> GetPreOrderList();
-        PreOrder GetPreOrder(string Id);
-        void UpdatePreOrder(PreOrder updatedOrder);
     }
 }
